@@ -19,7 +19,7 @@ class Speech2MQTT(Pygsr):
     
    
     
-  def listen(self, level = 1000,timeout = 1,ignore_shoter_than = 0.5,language = "sv_SE", device_i=None):
+  def listen(self, level = 1000,timeout = 1,ignore_shoter_than = 0.5,ignore_longer_than = 5 ,language = "sv_SE", device_i=None):
     audio = PyAudio()
     #print audio.get_device_info_by_index(1)
     stream = audio.open(input_device_index=device_i,output_device_index=device_i,format=self.format, channels=self.channel,
@@ -28,6 +28,7 @@ class Speech2MQTT(Pygsr):
 
     timeout_chuncks = self.rate / self.chunk * timeout
     minmessage = self.rate / self.chunk * ignore_shoter_than
+    maxmessage = self.rate / self.chunk * ignore_longer_than
 
     try:
 	    while(True):
@@ -70,6 +71,10 @@ class Speech2MQTT(Pygsr):
 			  print "Disregarding noise"
 			  frames = []
 			  continue
+			if len(frames)> self.count_silence + maxmessage:
+			  print "Ignoring to long recording"
+			  frames = []
+                          continue
 
 			print "Processing..."
 		        break
