@@ -7,7 +7,7 @@ from pyaudio import PyAudio, paInt16
 from pygsr import Pygsr
 import audioop
 import urllib2
-
+import sys
 
 class Speech2MQTT(Pygsr):
 
@@ -19,12 +19,16 @@ class Speech2MQTT(Pygsr):
     
    
     
-  def listen(self, level = 1000,timeout = 1,language = "sv_SE",loop=1, device_i=None):
+  def listen(self, level = 1000,timeout = 1,ignore_shoter_than = 0.5,language = "sv_SE", device_i=None):
     audio = PyAudio()
     #print audio.get_device_info_by_index(1)
     stream = audio.open(input_device_index=device_i,output_device_index=device_i,format=self.format, channels=self.channel,
                             rate=self.rate, input=True,
                             frames_per_buffer=self.chunk)
+
+    timeout_chuncks = self.rate / self.chunk * timeout
+    minmessage = self.rate / self.chunk * ignore_shoter_than
+
     try:
 	    while(True):
 	   
@@ -58,10 +62,17 @@ class Speech2MQTT(Pygsr):
 		        self.count_silence += 1
 		              
 		      #If we have enough silence send for processing  
-		      if self.count_silence > (self.rate / self.chunk * timeout):
+		      if (self.count_silence > timeout_chuncks) and self.active == True:
 		        self.active = False
+			#print len(frames) #10 12
+			#print self.count_silence #8
+			if not len(frames)> self.count_silence + minmessage:
+			  print "Disregarding noise"
+			  frames = []
+			  continue
+
 			print "Processing..."
-		        break;
+		        break
 		    
 		      olddata = data      
 		 
