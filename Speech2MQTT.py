@@ -61,3 +61,11 @@ class Speech2MQTT(Pygsr):
       phrase, complete_response = self.speech_to_text(language) # select the language
 
       return phrase
+
+
+if __name__ == '__main__':
+  listner = Speech2MQTT()
+  print listner.listen_once()
+  
+  
+
